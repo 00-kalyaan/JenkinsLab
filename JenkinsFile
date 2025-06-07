@@ -1,1 +1,43 @@
+pipeline {
+    agent any
 
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/00-kalyaan/JenkinsLab.git'
+            }
+        }
+
+        stage('Install Python Dependencies') {
+            steps {
+                sh '''
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install --upgrade pip
+                if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+                '''
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                sh '''
+                if [ -f test_app.py ]; then
+                    python3 -m unittest test_app.py
+                else
+                    echo "No test_app.py file found, skipping unit tests."
+                fi
+                '''
+            }
+        }
+
+        stage('Dependency Check') {
+            steps {
+                sh '''
+                cd ~/dependency-check
+                ./bin/dependency-check.sh --project "JenkinsProject" --scan ~/JenkinsLab
+                '''
+            }
+        }
+    }
+}
